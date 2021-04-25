@@ -1,4 +1,5 @@
-pragma solidity >=0.6.0 <0.9.0;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity >=0.4.16 <0.6.0;
 
 contract ZombieFactory {
 
@@ -23,6 +24,12 @@ contract ZombieFactory {
     //  array of structs which is public
     Zombie[] public zombies ;
 
+    // Mapping -> A mapping is essentially a key-value store for storing and looking up data
+    // uint - key, addrss is value
+    mapping (uint => address) public zombieToOwner;
+    // address - key, uint - value
+    mapping (address => uint) ownerZombieCount;
+
     // functions in sol 
     /**This is a function named createZombie that takes 2 parameters: 
     a string and a uint. For now the body of the function is empty.
@@ -32,11 +39,19 @@ contract ZombieFactory {
      Note: It's convention (but not required)
       to start function parameter variable names with an underscore (_) 
       in order to differentiate them from global variables
-     */
+     */ 
+    
+    // internal is the same as private, except that it's also accessible to contracts that inherit from this contract. 
 
-    function _createZombie(string memory _name, uint _dna) private {
+    function _createZombie(string memory _name, uint _dna) internal {
         //  adds zombie to the array
         uint id = zombies.push(Zombie(_name, _dna)) - 1;
+
+        // msg.sender which refers to the address of the person (or smart contract) who called the current function.
+        // update our zombieToOwner mapping to store msg.sender under that id.
+        zombieToOwner[id] = msg.sender;
+        //  let's increase ownerZombieCount for this msg.sender. 
+        ownerZombieCount[msg.sender]++;
 
         // fire an event to let the app know the function was called:
         emit NewZombie(id, _name, _dna);
@@ -66,6 +81,8 @@ contract ZombieFactory {
      */
 
     function createRandomZombie(string memory _name) public{
+        // require makes it so that the function will throw an error and stop executing if some condition is not true:
+        require(ownerZombieCount(msg.sender)==o);
         uint randDan = _generateRandomDna(_name);
         _createZombie(_name, randDan);
     }
