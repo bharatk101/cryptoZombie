@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.4.16 <0.6.0;
 
-contract ZombieFactory {
+import "./ownable.sol"
+
+contract ZombieFactory is Ownable {
 
     /**
     Events are a way for your contract to communicate that something happened on the
@@ -14,11 +16,14 @@ contract ZombieFactory {
     uint dnaDigits = 16;
     // ** -> power of 
     uint dnaModulus = 10 ** dnaDigits;
+    uint cooldownTime = 1 days;
 
     // struct -> Defines a new type with two fields.
     struct Zombie{
         string name;
         uint dna;
+        uint32 level;
+        uint32 readyTime;
     }
 
     //  array of structs which is public
@@ -45,7 +50,7 @@ contract ZombieFactory {
 
     function _createZombie(string memory _name, uint _dna) internal {
         //  adds zombie to the array
-        uint id = zombies.push(Zombie(_name, _dna)) - 1;
+        uint id = zombies.push(Zombie(_name, _dna, 1, uint32(now + cooldownTime))) - 1;
 
         // msg.sender which refers to the address of the person (or smart contract) who called the current function.
         // update our zombieToOwner mapping to store msg.sender under that id.
