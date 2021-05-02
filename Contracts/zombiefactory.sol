@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >=0.4.16 <0.6.0;
 
-import "./ownable.sol"
+import "./ownable.sol";
+import "./safemath.sol";
 
 contract ZombieFactory is Ownable {
 
@@ -10,7 +11,9 @@ contract ZombieFactory is Ownable {
      blockchain to your app front-end, which can be 'listening'
       for certain events and take action when they happen.
      */
-
+    using SafeMath for uint256;
+    using SafeMath32 for uint32;
+    using SafeMath16 for uint16;
     event NewZombie(uint zombieId, string name, uint dna);
     // uint -> unsigned int, 256 bit, cannot have -ve int
     uint dnaDigits = 16;
@@ -24,6 +27,8 @@ contract ZombieFactory is Ownable {
         uint dna;
         uint32 level;
         uint32 readyTime;
+        uint16 winCount;
+        uint16 lossCount;
     }
 
     //  array of structs which is public
@@ -50,13 +55,14 @@ contract ZombieFactory is Ownable {
 
     function _createZombie(string memory _name, uint _dna) internal {
         //  adds zombie to the array
-        uint id = zombies.push(Zombie(_name, _dna, 1, uint32(now + cooldownTime))) - 1;
+        uint id = zombies.push(Zombie(_name, _dna, 1, uint32(now + cooldownTime), 0, 0)) - 1;
 
         // msg.sender which refers to the address of the person (or smart contract) who called the current function.
         // update our zombieToOwner mapping to store msg.sender under that id.
         zombieToOwner[id] = msg.sender;
         //  let's increase ownerZombieCount for this msg.sender. 
-        ownerZombieCount[msg.sender]++;
+        ownerZombieCount[msg.sender] = ownerZombieCount[msg.sender].add(1);
+
 
         // fire an event to let the app know the function was called:
         emit NewZombie(id, _name, _dna);

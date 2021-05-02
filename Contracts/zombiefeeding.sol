@@ -3,7 +3,6 @@ pragma solidity >=0.4.16 <0.6.0;
 
 // import 
 import "./zombiefactory.sol";
-
 /**
 For our contract to talk to another contract on the blockchain that we don't own, 
 first we need to define an interface.
@@ -36,6 +35,11 @@ contract ZombieFeeding is ZombieFactory{
     // Initialize kittyContract here using `ckAddress` from above
     KittyInterface kittyContract;
 
+    modifier onlyOwnerOf(uint _zombieId) {
+    require(msg.sender == zombieToOwner[_zombieId]);
+    _;
+  }
+
     function setKittyContractAddress(address _address) external onlyOwner {
         kittyContract = KittyInterface(_address);
     }
@@ -51,12 +55,10 @@ contract ZombieFeeding is ZombieFactory{
     }
 
 
-    function feedAndMultiply(uint _zombieId, uint _targetDna, string memory _species) internal {
-        // require statement to verify that msg.sender is equal to this zombie's owner 
-        require(msg.sender == zombieToOwner[_zombieId]);
-        require(_isReady(my));
+    function feedAndMultiply(uint _zombieId, uint _targetDna, string memory _species) internal onlyOwnerOf(_zombieId){
         // a local Zombie named myZombie. Set this variable to be equal to index _zombieId in our zombies array.
         Zombie storage myZombie = zombies[_zombieId];
+        require(_isReady(myZombie));
         //  making sure _targetDna is 16 digits
         _targetDna = _targetDna % dnaModulus;
         // new zombie's DNA is simple: the average between the feeding zombie's DNA and the target's DNA. 
@@ -67,6 +69,7 @@ contract ZombieFeeding is ZombieFactory{
         }
         // calling createZombie function with name as noName
         _createZombie("NoName", newDna);
+        _triggerCooldown(myZombie);
   }
 
     function feedOnKitty(uint _zombieId, uint _kittyId) public{
